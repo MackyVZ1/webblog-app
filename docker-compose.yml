@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-webblog}
+      POSTGRES_USER: ${POSTGRES_USER:-webblog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-webblog_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-webblog}
+      DATABASE_USER: ${POSTGRES_USER:-webblog}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-webblog_secret}
+      JWT_SECRET: ${JWT_SECRET:-vibe-blog-local-secret}
+      FRONTEND_ORIGIN: http://localhost:4321
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4321
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://backend:3000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "4321:4321"
+
+volumes:
+  postgres_data:

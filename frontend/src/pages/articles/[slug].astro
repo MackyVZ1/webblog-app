@@ -1,0 +1,85 @@
+---
+import { ArrowLeft, ArrowUpRight, Clock, Eye } from 'lucide-react';
+import ArticleCard from '../../components/ArticleCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { apiFetch, type Article, type ArticleList, type Category } from '../../lib/api';
+import { formatThaiDate } from '../../lib/utils';
+
+const { slug } = Astro.params;
+let article: Article;
+try {
+  article = await apiFetch<Article>(`/articles/${slug}`);
+} catch {
+  return Astro.redirect('/404');
+}
+const [categories, relatedData] = await Promise.all([
+  apiFetch<Category[]>('/categories'),
+  apiFetch<ArticleList>(`/articles?category=${article.category.slug}&limit=4`),
+]);
+const related = relatedData.items.filter((item) => item.id !== article.id).slice(0, 3);
+const canonical = new URL(`/articles/${article.slug}`, Astro.site).toString();
+const articleLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: article.title,
+  description: article.excerpt,
+  image: [article.coverImage],
+  datePublished: article.publishedAt,
+  dateModified: article.updatedAt,
+  author: { '@type': 'Person', name: article.author.name },
+  publisher: { '@type': 'Organization', name: 'Pulse & Pixel', url: Astro.site },
+  mainEntityOfPage: canonical,
+};
+---
+<BaseLayout title={article.title} description={article.excerpt} image={article.coverImage} canonical={canonical} type="article" categories={categories} jsonLd={articleLd}>
+  <article>
+    <header class="container-shell pt-10 sm:pt-14 lg:pt-18">
+      <a href={`/categories/${article.category.slug}`} class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]"><ArrowLeft size={16} /> {article.category.name}</a>
+      <div class="mx-auto mt-10 max-w-4xl text-center">
+        <p class="text-xs font-extrabold uppercase tracking-[.16em]" style={`color:${article.category.color}`}>{article.category.name}</p>
+        <h1 class="font-display mt-5 text-balance text-[clamp(2.7rem,7vw,5.8rem)] font-semibold leading-[.98] tracking-[-.035em]">{article.title}</h1>
+        <p class="mx-auto mt-6 max-w-2xl text-base leading-7 text-[var(--muted)] sm:text-lg">{article.excerpt}</p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-xs text-[var(--muted)]">
+          <span class="flex items-center gap-2">{article.author.avatarUrl && <img class="h-9 w-9 rounded-full object-cover" src={article.author.avatarUrl} alt="" width="36" height="36" />} <strong class="text-[var(--ink)]">{article.author.name}</strong></span>
+          <span>{formatThaiDate(article.publishedAt)}</span>
+          <span class="flex items-center gap-1.5"><Clock size={14} /> {article.readingTime} นาที</span>
+          <span class="flex items-center gap-1.5"><Eye size={14} /> {article.views.toLocaleString('th-TH')}</span>
+        </div>
+      </div>
+      <figure class="mt-10 overflow-hidden rounded-[1.5rem] bg-[var(--surface-2)] sm:mt-14 lg:rounded-[2rem]">
+        <img class="aspect-[16/9] w-full object-cover" src={article.coverImage} alt={article.coverImageAlt || article.title} width="1400" height="788" fetchpriority="high" />
+      </figure>
+    </header>
+
+    <div class="container-shell grid gap-10 py-12 lg:grid-cols-[180px_minmax(0,720px)_1fr] lg:py-16">
+      <aside class="hidden lg:block">
+        <div class="sticky top-28">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-[var(--muted)]">Share this story</p>
+          <div class="mt-4 flex gap-2">
+            <a class="grid h-10 w-10 place-items-center rounded-full border border-[var(--line)] hover:bg-white" aria-label="แชร์ไป X" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(canonical)}&text=${encodeURIComponent(article.title)}`} target="_blank">𝕏</a>
+            <a class="grid h-10 w-10 place-items-center rounded-full border border-[var(--line)] hover:bg-white" aria-label="แชร์ไป Facebook" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonical)}`} target="_blank">f</a>
+          </div>
+        </div>
+      </aside>
+      <div class="prose-blog" set:html={article.content}></div>
+      <aside class="hidden lg:block">
+        <div class="sticky top-28 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
+          <p class="text-xs font-bold uppercase tracking-[.14em] text-[var(--muted)]">Written by</p>
+          {article.author.avatarUrl && <img class="mt-4 h-14 w-14 rounded-full object-cover" src={article.author.avatarUrl} alt={article.author.name} width="56" height="56" />}
+          <p class="mt-3 font-bold">{article.author.name}</p>
+          <p class="mt-2 text-xs leading-6 text-[var(--muted)]">{article.author.bio}</p>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="container-shell max-w-3xl border-y border-[var(--line)] py-7">
+      <div class="flex flex-wrap gap-2">{article.tags.map((tag) => <span class="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs font-semibold">#{tag}</span>)}</div>
+    </footer>
+  </article>
+
+  {related.length > 0 && <section class="container-shell pt-18">
+    <div class="mb-8 flex items-end justify-between"><div><p class="eyebrow">Keep reading</p><h2 class="font-display mt-3 text-4xl font-semibold">เรื่องที่น่าจะถูกใจคุณ</h2></div><a class="hidden items-center gap-1 text-sm font-semibold sm:flex" href={`/categories/${article.category.slug}`}>ดูทั้งหมด <ArrowUpRight size={16} /></a></div>
+    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{related.map((item) => <ArticleCard article={item} />)}</div>
+  </section>}
+</BaseLayout>
+

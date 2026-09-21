@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { apiFetch, type Author, type Category } from '../lib/api';
+const [categories, authors] = await Promise.all([apiFetch<Category[]>('/categories'), apiFetch<Author[]>('/users/authors')]);
+---
+<BaseLayout title="About" description="รู้จัก Pulse & Pixel — พื้นที่สำหรับไอเดียที่ชวนให้มองโลกต่างออกไป" categories={categories}>
+  <header class="container-shell py-16 text-center sm:py-20 lg:py-24"><p class="eyebrow">Our point of view</p><h1 class="font-display mx-auto mt-6 max-w-5xl text-balance text-[clamp(3.2rem,8vw,7rem)] font-semibold leading-[.95]">เราเชื่อในความอยากรู้<br /><i class="font-normal text-[var(--brand)]">ที่พาไปสู่การเปลี่ยนแปลง</i></h1></header>
+  <section class="border-y border-[var(--line)] bg-[var(--surface)]"><div class="container-shell grid gap-10 py-14 md:grid-cols-2 md:py-20"><div class="font-display text-3xl leading-tight sm:text-4xl">Pulse & Pixel เกิดจากคำถามง่าย ๆ ว่า ในวันที่ข้อมูลวิ่งเร็วขึ้น เราจะสร้างพื้นที่ให้ความคิดตกผลึกได้อย่างไร</div><div class="space-y-5 text-base leading-8 text-[var(--muted)]"><p>เราเขียนเรื่องเทคโนโลยี การออกแบบ ธุรกิจ วัฒนธรรม และชีวิต โดยไม่แยกสิ่งเหล่านี้ออกจากกัน เพราะไอเดียที่น่าสนใจมักเกิดตรงรอยต่อ</p><p>ทุกบทความตั้งใจให้คุณได้ทั้งความรู้ มุมมอง และคำถามใหม่กลับไป ไม่ว่าคุณจะเป็นนักสร้าง นักคิด หรือเพียงคนที่ยังอยากมองโลกด้วยสายตาสดใหม่</p></div></div></section>
+  <section class="container-shell py-16 sm:py-20"><p class="eyebrow">The people</p><h2 class="font-display mt-3 text-4xl font-semibold sm:text-5xl">ทีมบรรณาธิการ</h2><div class="mt-9 grid gap-5 sm:grid-cols-2">{authors.map((author) => <article class="flex gap-5 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">{author.avatarUrl && <img src={author.avatarUrl} alt={author.name} class="h-20 w-20 rounded-2xl object-cover" width="80" height="80" />}<div><h3 class="font-display text-2xl font-semibold">{author.name}</h3><p class="mt-2 text-sm leading-6 text-[var(--muted)]">{author.bio}</p></div></article>)}</div></section>
+</BaseLayout>

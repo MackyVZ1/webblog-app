@@ -1,0 +1,11 @@
+---
+import { SearchExperience } from '../components/SearchExperience';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { apiFetch, publicApiUrl, type Category } from '../lib/api';
+const categories = await apiFetch<Category[]>('/categories');
+const query = Astro.url.searchParams.get('q') || '';
+---
+<BaseLayout title="ค้นหาบทความ" description="ค้นหาเรื่องที่สนใจจากคลังบทความ Pulse & Pixel" categories={categories} noindex>
+  <header class="container-shell pb-10 pt-14 text-center sm:pt-20"><p class="eyebrow">Discover</p><h1 class="font-display mt-4 text-5xl font-semibold sm:text-7xl">ค้นหาเรื่องที่ใช่</h1><p class="mt-4 text-[var(--muted)]">ไอเดียดี ๆ อาจเริ่มจากคำเพียงคำเดียว</p></header>
+  <section class="container-shell max-w-5xl"><SearchExperience client:load apiUrl={publicApiUrl()} initialQuery={query} /></section>
+</BaseLayout>

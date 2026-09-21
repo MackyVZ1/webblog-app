@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { apiFetch, type Category } from '../lib/api';
+let categories: Category[] = [];
+try { categories = await apiFetch<Category[]>('/categories'); } catch {}
+Astro.response.status = 404;
+---
+<BaseLayout title="ไม่พบหน้าที่ค้นหา" description="หน้าที่คุณกำลังมองหาอาจถูกย้ายหรือไม่มีอยู่แล้ว" categories={categories} noindex>
+  <section class="container-shell grid min-h-[62vh] place-items-center py-20 text-center">
+    <div><p class="font-display text-[9rem] font-semibold leading-none text-[var(--surface-2)] sm:text-[13rem]">404</p><h1 class="font-display -mt-12 text-4xl font-semibold sm:-mt-16 sm:text-5xl">หลงทางนิดหน่อย</h1><p class="mx-auto mt-4 max-w-md text-[var(--muted)]">หน้าที่คุณกำลังมองหาอาจย้ายไปแล้ว แต่ยังมีเรื่องน่าสนใจอีกมากรออยู่</p><a href="/" class="mt-7 inline-flex rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-semibold text-white">กลับหน้าแรก</a></div>
+  </section>
+</BaseLayout>
+

@@ -1,0 +1,10 @@
+---
+import { AdminPanel } from '../../components/AdminPanel';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { apiFetch, publicApiUrl, type Category } from '../../lib/api';
+const categories = await apiFetch<Category[]>('/categories');
+---
+<BaseLayout title="Content Studio" description="พื้นที่จัดการเนื้อหา Pulse & Pixel" categories={categories} noindex>
+  <section class="container-shell py-12 sm:py-16"><AdminPanel client:load apiUrl={publicApiUrl()} /></section>
+</BaseLayout>
+
