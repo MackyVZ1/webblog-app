@@ -34,13 +34,15 @@ webblog-app/
 ## ฟีเจอร์สำคัญ
 
 - หน้า Home, หมวดหมู่, รายละเอียดบทความ และค้นหา
-- Admin login พร้อมเพิ่ม แก้ไข เผยแพร่ และลบบทความ
+- Admin login พร้อม Rich Text Editor สำหรับเพิ่ม แก้ไข จัดรูปแบบ เผยแพร่ และลบบทความ
 - Metadata, canonical URL, Open Graph, Twitter card, JSON-LD, sitemap และ robots.txt
 - REST API พร้อม Swagger และ health check
 - Responsive ที่ breakpoints `sm`, `md`, `lg`
 - PostgreSQL volume สำหรับเก็บข้อมูลข้ามการ restart
 
 ## คำสั่งสำหรับพัฒนาแบบไม่ใช้ Docker
+
+ต้องใช้ Node.js 22.12 ขึ้นไป และ PostgreSQL ที่กำลังทำงานอยู่
 
 ```bash
 # backend
@@ -51,4 +53,3 @@ cd frontend && npm install && npm run dev
 ```
 
 สำหรับ production ให้เปลี่ยน `JWT_SECRET`, database credentials และ `site` ใน `frontend/astro.config.mjs`
-

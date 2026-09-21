@@ -13,6 +13,12 @@
     "@astrojs/node": "^9.4.3",
     "@astrojs/react": "^4.3.0",
     "@tailwindcss/vite": "^4.1.12",
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/extension-text-align": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "astro": "^5.13.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -29,4 +35,3 @@
     "typescript": "^5.9.2"
   }
 }
-

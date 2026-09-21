@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import sanitizeHtml from 'sanitize-html';
 import { Repository } from 'typeorm';
 import { createSlug } from '../common/slug';
 import { Article, ArticleStatus } from './article.entity';
@@ -62,6 +63,7 @@ export class ArticlesService {
     if (existing) slug = `${slug}-${Date.now().toString().slice(-5)}`;
     const article = this.articles.create({
       ...dto,
+      content: this.sanitizeContent(dto.content),
       slug,
       authorId,
       tags: dto.tags || [],
@@ -76,8 +78,9 @@ export class ArticlesService {
     const article = await this.findOne(id);
     if (dto.title && dto.title !== article.title) article.slug = createSlug(dto.title);
     const wasDraft = article.status === ArticleStatus.DRAFT;
-    Object.assign(article, dto);
-    if (dto.content) article.readingTime = this.calculateReadingTime(dto.content);
+    const safeDto = dto.content ? { ...dto, content: this.sanitizeContent(dto.content) } : dto;
+    Object.assign(article, safeDto);
+    if (safeDto.content) article.readingTime = this.calculateReadingTime(safeDto.content);
     if (dto.status === ArticleStatus.PUBLISHED && wasDraft) article.publishedAt = new Date();
     return this.articles.save(article);
   }
@@ -91,5 +94,37 @@ export class ArticlesService {
   private calculateReadingTime(content: string) {
     const words = content.replace(/<[^>]*>/g, ' ').trim().split(/\s+/).length;
     return Math.max(1, Math.ceil(words / 180));
+  }
+
+  private sanitizeContent(content: string) {
+    const clean = sanitizeHtml(content, {
+      allowedTags: [
+        'p', 'br', 'h2', 'h3', 'h4', 'strong', 'em', 's', 'code', 'pre',
+        'ul', 'ol', 'li', 'blockquote', 'hr', 'a', 'img',
+      ],
+      allowedAttributes: {
+        a: ['href', 'target', 'rel'],
+        img: ['src', 'alt', 'title'],
+        p: ['style'],
+        h2: ['style'],
+        h3: ['style'],
+        h4: ['style'],
+      },
+      allowedStyles: {
+        '*': { 'text-align': [/^(left|center|right)$/] },
+      },
+      allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+      allowedSchemesByTag: { img: ['http', 'https'] },
+      transformTags: {
+        a: sanitizeHtml.simpleTransform('a', { target: '_blank', rel: 'noopener noreferrer nofollow' }),
+      },
+    });
+    const plainText = sanitizeHtml(clean, { allowedTags: [], allowedAttributes: {} })
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+    if (!plainText && !clean.includes('<img')) {
+      throw new BadRequestException('Article content cannot be empty');
+    }
+    return clean;
   }
 }

@@ -1,6 +1,7 @@
 import { Edit3, Eye, FileText, LogOut, Plus, Save, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { Article, ArticleList, Category } from '../lib/api';
+import { RichTextEditor } from './RichTextEditor';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -12,7 +13,7 @@ type EditorForm = {
 };
 
 const emptyForm: EditorForm = {
-  title: '', excerpt: '', content: '<p class="lead">เกริ่นนำบทความของคุณที่นี่</p>\n<h2>หัวข้อหลัก</h2>\n<p>เริ่มเขียนเรื่องราว…</p>',
+  title: '', excerpt: '', content: '<p>เริ่มเขียนเรื่องราวของคุณที่นี่…</p>',
   coverImage: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1600&q=85', coverImageAlt: '',
   categoryId: '', tags: '', status: 'draft', featured: false,
 };
@@ -127,7 +128,13 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
         <div className="mt-7 grid gap-5">
           <label className="grid gap-2 text-sm font-semibold">ชื่อบทความ<Input required maxLength={180} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
           <label className="grid gap-2 text-sm font-semibold">คำโปรย<Textarea required maxLength={220} className="min-h-24" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} /></label>
-          <label className="grid gap-2 text-sm font-semibold">เนื้อหา <span className="font-normal text-[var(--muted)]">รองรับ HTML สำหรับ heading, paragraph, list และ quote</span><Textarea required className="min-h-80 font-mono text-xs leading-6" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
+          <div className="grid gap-2 text-sm font-semibold">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>เนื้อหา</span>
+              <span className="font-normal text-[var(--muted)]">จัดรูปแบบได้ทันทีโดยไม่ต้องเขียน HTML</span>
+            </div>
+            <RichTextEditor value={form.content} onChange={(content) => setForm((current) => ({ ...current, content }))} disabled={saving} />
+          </div>
           <div className="grid gap-5 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-semibold">หมวดหมู่<select required className="h-11 rounded-xl border border-[var(--line)] bg-white px-4" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}><option value="">เลือกหมวดหมู่</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
             <label className="grid gap-2 text-sm font-semibold">สถานะ<select className="h-11 rounded-xl border border-[var(--line)] bg-white px-4" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as EditorForm['status'] })}><option value="draft">ฉบับร่าง</option><option value="published">เผยแพร่</option></select></label>

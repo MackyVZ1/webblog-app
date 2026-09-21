@@ -86,7 +86,58 @@ img { max-width: 100%; }
   line-height: 1.5;
 }
 .prose-blog ul { list-style: disc; padding-left: 1.4rem; }
+.prose-blog ol { list-style: decimal; padding-left: 1.4rem; }
 .prose-blog li + li { margin-top: .6rem; }
+.prose-blog a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+.prose-blog img { width: 100%; border-radius: 1.25rem; margin-block: 2rem; }
+.prose-blog hr { border: 0; border-top: 1px solid var(--line); margin-block: 2.5rem; }
+.prose-blog pre { overflow-x: auto; border-radius: 1rem; background: var(--ink); color: white; padding: 1.25rem; }
+.prose-blog code { border-radius: .35rem; background: var(--surface-2); padding: .15rem .35rem; font-family: ui-monospace, monospace; font-size: .9em; }
+.prose-blog pre code { background: transparent; padding: 0; }
+
+.rich-editor {
+  color: #34403c;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.rich-editor > * + * { margin-top: 1rem; }
+.rich-editor h2,
+.rich-editor h3 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 1.8rem;
+}
+.rich-editor h2 { font-size: 1.8rem; }
+.rich-editor h3 { font-size: 1.4rem; }
+.rich-editor ul { list-style: disc; padding-left: 1.5rem; }
+.rich-editor ol { list-style: decimal; padding-left: 1.5rem; }
+.rich-editor li + li { margin-top: .35rem; }
+.rich-editor blockquote {
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+  font-style: italic;
+  padding-left: 1rem;
+}
+.rich-editor code {
+  border-radius: .35rem;
+  background: var(--surface-2);
+  padding: .15rem .35rem;
+  font-family: ui-monospace, monospace;
+  font-size: .9em;
+}
+.rich-editor a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+.rich-editor img { margin-inline: auto; max-height: 32rem; border-radius: 1rem; object-fit: cover; }
+.rich-editor hr { border: 0; border-top: 1px solid var(--line); margin-block: 1.75rem; }
+.rich-editor p.is-editor-empty:first-child::before {
+  color: #99a09d;
+  content: 'เริ่มเขียนเรื่องราวของคุณ…';
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
 
 .grid-noise {
   background-image: radial-gradient(circle at 1px 1px, rgba(24,32,30,.09) 1px, transparent 0);
@@ -100,4 +151,3 @@ img { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
-
