@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml = require('sanitize-html');
 import { Repository } from 'typeorm';
 import { createSlug } from '../common/slug';
 import { Article, ArticleStatus } from './article.entity';
