@@ -6,6 +6,8 @@ import { ImageInput } from './ImageInput';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { FormField, RequiredMark } from './ui/form-field';
+import { Select } from './ui/select';
 import { Textarea } from './ui/textarea';
 
 type EditorForm = {
@@ -14,10 +16,15 @@ type EditorForm = {
 };
 
 const emptyForm: EditorForm = {
-  title: '', excerpt: '', content: '<p>เริ่มเขียนเรื่องราวของคุณที่นี่…</p>',
+  title: '', excerpt: '', content: '<p></p>',
   coverImage: '', coverImageAlt: '',
   categoryId: '', tags: '', status: 'draft', featured: false,
 };
+
+function hasMeaningfulContent(content: string) {
+  const text = content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
+  return Boolean(text || /<img\b/i.test(content));
+}
 
 export function AdminPanel({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState('');
@@ -31,6 +38,8 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
   const [showEditor, setShowEditor] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
+  const [noticeType, setNoticeType] = useState<'success' | 'error'>('success');
+  const [submitted, setSubmitted] = useState(false);
 
   const published = useMemo(() => articles.filter((item) => item.status === 'published').length, [articles]);
 
@@ -68,17 +77,25 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
   }
 
   function openCreate() {
-    setEditing(null); setForm({ ...emptyForm, categoryId: categories[0]?.id || '' }); setShowEditor(true); setNotice('');
+    setEditing(null); setForm({ ...emptyForm, categoryId: categories[0]?.id || '' }); setShowEditor(true); setNotice(''); setSubmitted(false);
   }
 
   function openEdit(article: Article) {
     setEditing(article);
     setForm({ title: article.title, excerpt: article.excerpt, content: article.content, coverImage: article.coverImage, coverImageAlt: article.coverImageAlt || '', categoryId: article.categoryId, tags: article.tags.join(', '), status: article.status, featured: article.featured });
-    setShowEditor(true); setNotice(''); window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowEditor(true); setNotice(''); setSubmitted(false); window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function save(event: { preventDefault(): void }) {
-    event.preventDefault(); setSaving(true); setNotice('');
+    event.preventDefault();
+    setSubmitted(true);
+    setNotice('');
+    if (!form.coverImage || !hasMeaningfulContent(form.content)) {
+      setNotice('กรุณากรอกข้อมูลในช่องที่มีเครื่องหมาย * ให้ครบถ้วน');
+      setNoticeType('error');
+      return;
+    }
+    setSaving(true);
     const body = { ...form, tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean) };
     const response = await fetch(`${apiUrl}/api/articles${editing ? `/${editing.id}` : ''}`, {
       method: editing ? 'PATCH' : 'POST',
@@ -86,8 +103,8 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
       body: JSON.stringify(body),
     });
     setSaving(false);
-    if (!response.ok) { const error = await response.json(); setNotice(Array.isArray(error.message) ? error.message.join(', ') : error.message || 'บันทึกไม่สำเร็จ'); return; }
-    setNotice('บันทึกบทความเรียบร้อยแล้ว'); setShowEditor(false); await loadData();
+    if (!response.ok) { const error = await response.json(); setNotice(Array.isArray(error.message) ? error.message.join(', ') : error.message || 'บันทึกไม่สำเร็จ'); setNoticeType('error'); return; }
+    setNotice('บันทึกบทความเรียบร้อยแล้ว'); setNoticeType('success'); setShowEditor(false); setSubmitted(false); await loadData();
   }
 
   async function remove(article: Article) {
@@ -101,9 +118,10 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
       <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--ink)] text-xl text-white">✦</div>
       <h1 className="font-display mt-6 text-4xl font-semibold">Welcome back.</h1>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">เข้าสู่ระบบเพื่อสร้างและจัดการเรื่องราวบน Pulse & Pixel</p>
+      <p className="mt-3 text-xs text-[var(--muted)]"><RequiredMark /> ฟิลด์จำเป็น</p>
       <form onSubmit={login} className="mt-7 grid gap-4">
-        <label className="grid gap-2 text-sm font-semibold">อีเมล<Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-        <label className="grid gap-2 text-sm font-semibold">รหัสผ่าน<Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+        <FormField label="อีเมล" htmlFor="login-email" required><Input id="login-email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></FormField>
+        <FormField label="รหัสผ่าน" htmlFor="login-password" required><Input id="login-password" required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} /></FormField>
         {loginError && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{loginError}</p>}
         <Button type="submit" className="mt-2 w-full">เข้าสู่ระบบ</Button>
       </form>
@@ -122,30 +140,25 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
         {[['บทความทั้งหมด', articles.length, FileText], ['เผยแพร่แล้ว', published, Eye], ['ฉบับร่าง', articles.length - published, Edit3]].map(([label, value, Icon]: any) => <div key={label} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><Icon size={18} className="text-[var(--brand)]" /><p className="mt-5 text-3xl font-bold">{value}</p><p className="mt-1 text-xs text-[var(--muted)]">{label}</p></div>)}
       </div>
 
-      {notice && <p className="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
+      {notice && <p className={noticeType === 'success' ? 'mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800' : 'mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700'} role={noticeType === 'error' ? 'alert' : 'status'}>{notice}</p>}
 
       {showEditor && <form onSubmit={save} className="mt-8 rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-8">
-        <div className="flex items-center justify-between"><h2 className="font-display text-3xl font-semibold">{editing ? 'แก้ไขบทความ' : 'สร้างบทความใหม่'}</h2><button type="button" onClick={() => setShowEditor(false)} className="grid h-10 w-10 place-items-center rounded-full hover:bg-[var(--surface-2)]" aria-label="ปิด"><X /></button></div>
+        <div className="flex items-center justify-between"><div><h2 className="font-display text-3xl font-semibold">{editing ? 'แก้ไขบทความ' : 'สร้างบทความใหม่'}</h2><p className="mt-2 text-xs text-[var(--muted)]"><RequiredMark /> ฟิลด์จำเป็น</p></div><button type="button" onClick={() => setShowEditor(false)} className="grid h-10 w-10 place-items-center rounded-full hover:bg-[var(--surface-2)]" aria-label="ปิด"><X /></button></div>
         <div className="mt-7 grid gap-5">
-          <label className="grid gap-2 text-sm font-semibold">ชื่อบทความ<Input required maxLength={180} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-          <label className="grid gap-2 text-sm font-semibold">คำโปรย<Textarea required maxLength={220} className="min-h-24" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} /></label>
-          <div className="grid gap-2 text-sm font-semibold">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>เนื้อหา</span>
-              <span className="font-normal text-[var(--muted)]">จัดรูปแบบได้ทันทีโดยไม่ต้องเขียน HTML</span>
-            </div>
-            <RichTextEditor value={form.content} onChange={(content) => setForm((current) => ({ ...current, content }))} apiUrl={apiUrl} token={token} disabled={saving} />
-          </div>
+          <FormField label="ชื่อบทความ" htmlFor="article-title" required><Input id="article-title" required maxLength={180} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></FormField>
+          <FormField label="คำโปรย" htmlFor="article-excerpt" required hint={`${form.excerpt.length}/220 ตัวอักษร`}><Textarea id="article-excerpt" required maxLength={220} className="min-h-24" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} /></FormField>
+          <FormField label="เนื้อหา" htmlFor="article-content" required hint="จัดรูปแบบได้ทันทีโดยไม่ต้องเขียน HTML" error={submitted && !hasMeaningfulContent(form.content) ? 'กรุณาเขียนเนื้อหาบทความ' : undefined}>
+            <RichTextEditor id="article-content" required value={form.content} onChange={(content) => setForm((current) => ({ ...current, content }))} apiUrl={apiUrl} token={token} disabled={saving} />
+          </FormField>
           <div className="grid gap-5 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-semibold">หมวดหมู่<select required className="h-11 rounded-xl border border-[var(--line)] bg-white px-4" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}><option value="">เลือกหมวดหมู่</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-            <label className="grid gap-2 text-sm font-semibold">สถานะ<select className="h-11 rounded-xl border border-[var(--line)] bg-white px-4" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as EditorForm['status'] })}><option value="draft">ฉบับร่าง</option><option value="published">เผยแพร่</option></select></label>
+            <FormField label="หมวดหมู่" htmlFor="article-category" required><Select id="article-category" required value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}><option value="">เลือกหมวดหมู่</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></FormField>
+            <FormField label="สถานะ" htmlFor="article-status" required><Select id="article-status" required value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as EditorForm['status'] })}><option value="draft">ฉบับร่าง</option><option value="published">เผยแพร่</option></Select></FormField>
           </div>
-          <div className="grid gap-2 text-sm font-semibold"><span>รูปปก</span><ImageInput value={form.coverImage} onChange={(coverImage) => setForm((current) => ({ ...current, coverImage }))} apiUrl={apiUrl} token={token} aspect={16 / 9} disabled={saving} label="อัปโหลดรูปปก" /></div>
-          {!form.coverImage && <p className="-mt-3 text-xs font-medium text-red-700">กรุณาอัปโหลดรูปปกก่อนบันทึกบทความ</p>}
-          <label className="grid gap-2 text-sm font-semibold">Alt text รูปปก<Input value={form.coverImageAlt} onChange={(e) => setForm({ ...form, coverImageAlt: e.target.value })} /></label>
-          <label className="grid gap-2 text-sm font-semibold">Tags (คั่นด้วย comma)<Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Design, UX, Research" /></label>
+          <ImageInput id="article-cover" required value={form.coverImage} onChange={(coverImage) => setForm((current) => ({ ...current, coverImage }))} apiUrl={apiUrl} token={token} aspect={16 / 9} disabled={saving} label="รูปปก" validationError={submitted && !form.coverImage ? 'กรุณาอัปโหลดรูปปก' : undefined} />
+          <FormField label="Alt text รูปปก" htmlFor="article-cover-alt" hint="แนะนำสำหรับ SEO และผู้ใช้ screen reader"><Input id="article-cover-alt" value={form.coverImageAlt} onChange={(e) => setForm({ ...form, coverImageAlt: e.target.value })} /></FormField>
+          <FormField label="Tags" htmlFor="article-tags" hint="คั่นแต่ละ tag ด้วย comma"><Input id="article-tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Design, UX, Research" /></FormField>
           <label className="flex items-center gap-3 text-sm font-semibold"><input type="checkbox" className="h-4 w-4 accent-[var(--brand)]" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> ตั้งเป็นบทความแนะนำ</label>
-          <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="ghost" onClick={() => setShowEditor(false)}>ยกเลิก</Button><Button type="submit" disabled={saving || !form.coverImage}><Save size={17} /> {saving ? 'กำลังบันทึก…' : 'บันทึกบทความ'}</Button></div>
+          <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="ghost" onClick={() => setShowEditor(false)}>ยกเลิก</Button><Button type="submit" disabled={saving}><Save size={17} /> {saving ? 'กำลังบันทึก…' : 'บันทึกบทความ'}</Button></div>
         </div>
       </form>}
 

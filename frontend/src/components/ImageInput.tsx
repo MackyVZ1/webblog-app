@@ -5,14 +5,17 @@ import { Button } from './ui/button';
 
 interface ImageInputProps {
   value?: string;
+  id?: string;
   onChange: (url: string) => void;
   apiUrl: string;
   token: string;
   aspect?: number;
   disabled?: boolean;
+  required?: boolean;
   compact?: boolean;
   label?: string;
   helpText?: string;
+  validationError?: string;
 }
 
 const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
@@ -53,14 +56,17 @@ async function createCroppedBlob(source: string, area: Area) {
 
 export function ImageInput({
   value,
+  id = 'image-input',
   onChange,
   apiUrl,
   token,
   aspect = 16 / 9,
   disabled = false,
+  required = false,
   compact = false,
   label = 'เลือกรูปภาพ',
-  helpText = 'JPEG, PNG, WebP, AVIF หรือ HEIC ขนาดไม่เกิน 10 MB',
+  helpText = 'JPEG, PNG, WebP หรือ AVIF ขนาดไม่เกิน 10 MB',
+  validationError,
 }: ImageInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [source, setSource] = useState('');
@@ -126,8 +132,15 @@ export function ImageInput({
 
   return (
     <div className="grid gap-2">
+      {!compact && (
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <label htmlFor={id} className="text-sm font-semibold">{label}{required && <span className="ml-1 text-[var(--accent)]" aria-hidden="true">*</span>}<span className="sr-only">{required ? ' (จำเป็น)' : ''}</span></label>
+          <span className="text-xs font-normal text-[var(--muted)]">{helpText}</span>
+        </div>
+      )}
       <input
         ref={inputRef}
+        id={id}
         type="file"
         accept={acceptedTypes.join(',')}
         disabled={disabled}
@@ -147,6 +160,7 @@ export function ImageInput({
         <button
           type="button"
           disabled={disabled}
+          aria-required={required || undefined}
           onClick={() => inputRef.current?.click()}
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => { event.preventDefault(); selectFile(event.dataTransfer.files?.[0]); }}
@@ -155,11 +169,12 @@ export function ImageInput({
             : 'grid min-h-44 place-items-center rounded-2xl border-2 border-dashed border-[var(--line)] bg-[var(--paper)] p-6 text-center transition hover:border-[var(--brand)] hover:bg-white disabled:opacity-50'}
         >
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--surface-2)] text-[var(--brand)]"><ImagePlus size={20} /></span>
-          <span className={compact ? '' : 'mt-3'}><strong className="block text-sm text-[var(--ink)]">{label}</strong><span className="mt-1 block text-xs font-normal leading-5 text-[var(--muted)]">คลิกหรือลากไฟล์มาวาง · {helpText}</span></span>
+          <span className={compact ? '' : 'mt-3'}><strong className="block text-sm text-[var(--ink)]">{compact ? label : 'เลือกไฟล์จากเครื่อง'}{required && compact && <span className="ml-1 text-[var(--accent)]" aria-hidden="true">*</span>}</strong><span className="mt-1 block text-xs font-normal leading-5 text-[var(--muted)]">คลิกหรือลากไฟล์มาวาง{compact ? ` · ${helpText}` : ''}</span></span>
         </button>
       )}
 
       {error && !source && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{error}</p>}
+      {validationError && <p className="text-xs font-medium text-red-700" role="alert">{validationError}</p>}
 
       {source && (
         <div className="fixed inset-0 z-[100] grid place-items-center bg-black/65 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label="Crop รูปภาพ">

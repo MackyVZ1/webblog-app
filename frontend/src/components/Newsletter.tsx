@@ -21,10 +21,12 @@ export function Newsletter() {
         {done ? (
           <div className="flex items-center gap-3 rounded-2xl bg-white/12 p-5"><span className="grid h-9 w-9 place-items-center rounded-full bg-white text-[var(--brand)]"><Check size={18} /></span><p className="font-semibold">ขอบคุณ! แล้วพบกันในฉบับหน้า</p></div>
         ) : (
-          <form onSubmit={subscribe} className="flex flex-col gap-3 sm:flex-row md:flex-col lg:flex-row">
-            <label className="sr-only" htmlFor="newsletter-email">อีเมล</label>
-            <Input id="newsletter-email" required type="email" placeholder="you@example.com" className="border-white/20 bg-white/10 text-white placeholder:text-white/45 focus:border-white" />
-            <Button type="submit" className="shrink-0 bg-white text-[var(--ink)] hover:bg-[#eeeae0]">Subscribe <ArrowRight size={16} /></Button>
+          <form onSubmit={subscribe} className="grid gap-2">
+            <label className="text-xs font-semibold text-white/70" htmlFor="newsletter-email">อีเมล <span className="text-[#ffc1ae]" aria-hidden="true">*</span><span className="sr-only"> (จำเป็น)</span></label>
+            <div className="flex flex-col gap-3 sm:flex-row md:flex-col lg:flex-row">
+              <Input id="newsletter-email" required type="email" placeholder="you@example.com" className="border-white/20 bg-white/10 text-white placeholder:text-white/45 focus:border-white" />
+              <Button type="submit" className="shrink-0 bg-white text-[var(--ink)] hover:bg-[#eeeae0]">Subscribe <ArrowRight size={16} /></Button>
+            </div>
           </form>
         )}
       </div>

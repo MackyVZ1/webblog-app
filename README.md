@@ -37,6 +37,7 @@ webblog-app/
 - หน้า Home, หมวดหมู่, รายละเอียดบทความ และค้นหา
 - Admin login พร้อม Rich Text Editor สำหรับเพิ่ม แก้ไข จัดรูปแบบ เผยแพร่ และลบบทความ
 - Image input แบบ reusable: เลือกไฟล์, drag & drop, crop/zoom และใช้ได้ทั้งรูปปกกับรูปในบทความ
+- Form field components รองรับ `required`, เครื่องหมาย `*`, native validation และ accessibility attributes ในรูปแบบเดียวกัน
 - รูปถูกตรวจสอบและ optimize เป็น WebP ก่อนเก็บใน Docker volume โดย URL จะถูกบันทึกกับบทความใน PostgreSQL
 - Metadata, canonical URL, Open Graph, Twitter card, JSON-LD, sitemap และ robots.txt
 - REST API พร้อม Swagger และ health check

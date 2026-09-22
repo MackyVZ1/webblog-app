@@ -27,12 +27,16 @@ import {
 import { useEffect, useState, type ReactNode } from 'react';
 import { cn } from '../lib/utils';
 import { ImageInput } from './ImageInput';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
 
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
   apiUrl: string;
   token: string;
+  id?: string;
+  required?: boolean;
   disabled?: boolean;
 }
 
@@ -67,7 +71,7 @@ function ToolbarDivider() {
   return <span className="mx-1 h-6 w-px shrink-0 bg-[var(--line)]" aria-hidden="true" />;
 }
 
-export function RichTextEditor({ value, onChange, apiUrl, token, disabled = false }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, apiUrl, token, id, required = false, disabled = false }: RichTextEditorProps) {
   const [, setRevision] = useState(0);
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [imageAlt, setImageAlt] = useState('');
@@ -89,8 +93,10 @@ export function RichTextEditor({ value, onChange, apiUrl, token, disabled = fals
     editorProps: {
       attributes: {
         class: 'rich-editor min-h-80 px-5 py-6 outline-none sm:px-7',
+        id: id || 'rich-text-editor',
         role: 'textbox',
         'aria-label': 'เนื้อหาบทความ',
+        'aria-required': required ? 'true' : 'false',
       },
     },
     onUpdate: ({ editor: instance }) => {
@@ -172,7 +178,7 @@ export function RichTextEditor({ value, onChange, apiUrl, token, disabled = fals
               <button type="button" onClick={() => setShowImageUpload(false)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-[var(--surface-2)]" aria-label="ปิด"><span aria-hidden="true">×</span></button>
             </div>
             <div className="mt-5 grid gap-4">
-              <label className="grid gap-2 text-sm font-semibold">คำอธิบายรูปภาพ (Alt text)<input value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} className="h-11 rounded-xl border border-[var(--line)] bg-white px-4 font-normal outline-none focus:border-[var(--brand)]" placeholder="อธิบายสิ่งที่อยู่ในภาพเพื่อ SEO และ accessibility" /></label>
+              <FormField label="คำอธิบายรูปภาพ (Alt text)" htmlFor="editor-image-alt" hint="แนะนำสำหรับ SEO และ accessibility"><Input id="editor-image-alt" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} placeholder="อธิบายสิ่งที่อยู่ในภาพ" /></FormField>
               <ImageInput onChange={insertUploadedImage} apiUrl={apiUrl} token={token} aspect={16 / 9} compact label="เลือกไฟล์จากเครื่อง" />
             </div>
           </div>

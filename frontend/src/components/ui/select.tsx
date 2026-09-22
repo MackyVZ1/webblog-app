@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(
   ({ className, required, ...props }, ref) => (
-    <input
+    <select
       ref={ref}
       required={required}
       aria-required={required || undefined}
@@ -12,4 +12,4 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     />
   ),
 );
-Input.displayName = 'Input';
+Select.displayName = 'Select';
