@@ -2,6 +2,7 @@ import { Edit3, Eye, FileText, LogOut, Plus, Save, Trash2, X } from 'lucide-reac
 import { useEffect, useMemo, useState } from 'react';
 import type { Article, ArticleList, Category } from '../lib/api';
 import { RichTextEditor } from './RichTextEditor';
+import { ImageInput } from './ImageInput';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -14,7 +15,7 @@ type EditorForm = {
 
 const emptyForm: EditorForm = {
   title: '', excerpt: '', content: '<p>เริ่มเขียนเรื่องราวของคุณที่นี่…</p>',
-  coverImage: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1600&q=85', coverImageAlt: '',
+  coverImage: '', coverImageAlt: '',
   categoryId: '', tags: '', status: 'draft', featured: false,
 };
 
@@ -133,17 +134,18 @@ export function AdminPanel({ apiUrl }: { apiUrl: string }) {
               <span>เนื้อหา</span>
               <span className="font-normal text-[var(--muted)]">จัดรูปแบบได้ทันทีโดยไม่ต้องเขียน HTML</span>
             </div>
-            <RichTextEditor value={form.content} onChange={(content) => setForm((current) => ({ ...current, content }))} disabled={saving} />
+            <RichTextEditor value={form.content} onChange={(content) => setForm((current) => ({ ...current, content }))} apiUrl={apiUrl} token={token} disabled={saving} />
           </div>
           <div className="grid gap-5 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-semibold">หมวดหมู่<select required className="h-11 rounded-xl border border-[var(--line)] bg-white px-4" value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}><option value="">เลือกหมวดหมู่</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
             <label className="grid gap-2 text-sm font-semibold">สถานะ<select className="h-11 rounded-xl border border-[var(--line)] bg-white px-4" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as EditorForm['status'] })}><option value="draft">ฉบับร่าง</option><option value="published">เผยแพร่</option></select></label>
           </div>
-          <label className="grid gap-2 text-sm font-semibold">URL รูปปก<Input required type="url" value={form.coverImage} onChange={(e) => setForm({ ...form, coverImage: e.target.value })} /></label>
+          <div className="grid gap-2 text-sm font-semibold"><span>รูปปก</span><ImageInput value={form.coverImage} onChange={(coverImage) => setForm((current) => ({ ...current, coverImage }))} apiUrl={apiUrl} token={token} aspect={16 / 9} disabled={saving} label="อัปโหลดรูปปก" /></div>
+          {!form.coverImage && <p className="-mt-3 text-xs font-medium text-red-700">กรุณาอัปโหลดรูปปกก่อนบันทึกบทความ</p>}
           <label className="grid gap-2 text-sm font-semibold">Alt text รูปปก<Input value={form.coverImageAlt} onChange={(e) => setForm({ ...form, coverImageAlt: e.target.value })} /></label>
           <label className="grid gap-2 text-sm font-semibold">Tags (คั่นด้วย comma)<Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Design, UX, Research" /></label>
           <label className="flex items-center gap-3 text-sm font-semibold"><input type="checkbox" className="h-4 w-4 accent-[var(--brand)]" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> ตั้งเป็นบทความแนะนำ</label>
-          <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="ghost" onClick={() => setShowEditor(false)}>ยกเลิก</Button><Button type="submit" disabled={saving}><Save size={17} /> {saving ? 'กำลังบันทึก…' : 'บันทึกบทความ'}</Button></div>
+          <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-5 sm:flex-row sm:justify-end"><Button type="button" variant="ghost" onClick={() => setShowEditor(false)}>ยกเลิก</Button><Button type="submit" disabled={saving || !form.coverImage}><Save size={17} /> {saving ? 'กำลังบันทึก…' : 'บันทึกบทความ'}</Button></div>
         </div>
       </form>}
 

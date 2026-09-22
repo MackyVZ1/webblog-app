@@ -14,6 +14,7 @@ docker compose up --build
 - Admin: http://localhost:4321/admin
 - REST API: http://localhost:3000/api
 - Swagger: http://localhost:3000/api/docs
+- Uploaded images: `http://localhost:3000/uploads/<filename>.webp`
 
 บัญชีแอดมินจำลอง:
 
@@ -35,6 +36,8 @@ webblog-app/
 
 - หน้า Home, หมวดหมู่, รายละเอียดบทความ และค้นหา
 - Admin login พร้อม Rich Text Editor สำหรับเพิ่ม แก้ไข จัดรูปแบบ เผยแพร่ และลบบทความ
+- Image input แบบ reusable: เลือกไฟล์, drag & drop, crop/zoom และใช้ได้ทั้งรูปปกกับรูปในบทความ
+- รูปถูกตรวจสอบและ optimize เป็น WebP ก่อนเก็บใน Docker volume โดย URL จะถูกบันทึกกับบทความใน PostgreSQL
 - Metadata, canonical URL, Open Graph, Twitter card, JSON-LD, sitemap และ robots.txt
 - REST API พร้อม Swagger และ health check
 - Responsive ที่ breakpoints `sm`, `md`, `lg`

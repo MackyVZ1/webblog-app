@@ -26,10 +26,13 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { cn } from '../lib/utils';
+import { ImageInput } from './ImageInput';
 
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
+  apiUrl: string;
+  token: string;
   disabled?: boolean;
 }
 
@@ -64,8 +67,10 @@ function ToolbarDivider() {
   return <span className="mx-1 h-6 w-px shrink-0 bg-[var(--line)]" aria-hidden="true" />;
 }
 
-export function RichTextEditor({ value, onChange, disabled = false }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, apiUrl, token, disabled = false }: RichTextEditorProps) {
   const [, setRevision] = useState(0);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [imageAlt, setImageAlt] = useState('');
   const editor = useEditor({
     immediatelyRender: false,
     editable: !disabled,
@@ -120,11 +125,10 @@ export function RichTextEditor({ value, onChange, disabled = false }: RichTextEd
     editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
   };
 
-  const addImage = () => {
-    const src = window.prompt('ใส่ URL ของรูปภาพ', 'https://');
-    if (!src || !/^https?:\/\//i.test(src)) return;
-    const alt = window.prompt('คำอธิบายรูปภาพ (Alt text)', '') || '';
-    editor.chain().focus().setImage({ src, alt, title: alt }).run();
+  const insertUploadedImage = (src: string) => {
+    editor.chain().focus().setImage({ src, alt: imageAlt, title: imageAlt }).run();
+    setShowImageUpload(false);
+    setImageAlt('');
   };
 
   return (
@@ -146,7 +150,7 @@ export function RichTextEditor({ value, onChange, disabled = false }: RichTextEd
         <ToolbarButton label="เส้นคั่น" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus size={18} /></ToolbarButton>
         <ToolbarDivider />
         <ToolbarButton label="เพิ่มหรือแก้ไขลิงก์" active={editor.isActive('link')} onClick={setLink}><Link2 size={17} /></ToolbarButton>
-        <ToolbarButton label="แทรกรูปภาพด้วย URL" onClick={addImage}><ImagePlus size={18} /></ToolbarButton>
+        <ToolbarButton label="อัปโหลดรูปภาพ" onClick={() => setShowImageUpload(true)}><ImagePlus size={18} /></ToolbarButton>
         <ToolbarDivider />
         <ToolbarButton label="จัดชิดซ้าย" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeft size={17} /></ToolbarButton>
         <ToolbarButton label="จัดกึ่งกลาง" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenter size={17} /></ToolbarButton>
@@ -160,6 +164,20 @@ export function RichTextEditor({ value, onChange, disabled = false }: RichTextEd
         <span>เลือกข้อความเพื่อจัดรูปแบบ · วางข้อความจากเอกสารได้โดยตรง</span>
         <span>{editor.storage.characterCount?.characters?.() || editor.getText().length} ตัวอักษร</span>
       </div>
+      {showImageUpload && (
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/60 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label="แทรกรูปภาพในเนื้อหา">
+          <div className="w-full max-w-lg rounded-[1.5rem] bg-[var(--surface)] p-5 shadow-2xl sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div><h3 className="font-display text-2xl font-semibold">แทรกรูปในบทความ</h3><p className="mt-1 text-xs font-normal leading-5 text-[var(--muted)]">เลือกรูป Crop แล้วระบบจะแทรกไว้ตรงตำแหน่ง cursor</p></div>
+              <button type="button" onClick={() => setShowImageUpload(false)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-[var(--surface-2)]" aria-label="ปิด"><span aria-hidden="true">×</span></button>
+            </div>
+            <div className="mt-5 grid gap-4">
+              <label className="grid gap-2 text-sm font-semibold">คำอธิบายรูปภาพ (Alt text)<input value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} className="h-11 rounded-xl border border-[var(--line)] bg-white px-4 font-normal outline-none focus:border-[var(--brand)]" placeholder="อธิบายสิ่งที่อยู่ในภาพเพื่อ SEO และ accessibility" /></label>
+              <ImageInput onChange={insertUploadedImage} apiUrl={apiUrl} token={token} aspect={16 / 9} compact label="เลือกไฟล์จากเครื่อง" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

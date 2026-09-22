@@ -7,6 +7,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { DatabaseSeeder } from './database/database.seeder';
 import { HealthController } from './health/health.controller';
 import { UsersModule } from './users/users.module';
+import { UploadsModule } from './uploads/uploads.module';
 import { Article } from './articles/article.entity';
 import { Category } from './categories/category.entity';
 import { User } from './users/user.entity';
@@ -31,6 +32,7 @@ import { User } from './users/user.entity';
     CategoriesModule,
     ArticlesModule,
     AuthModule,
+    UploadsModule,
   ],
   controllers: [HealthController],
   providers: [DatabaseSeeder],

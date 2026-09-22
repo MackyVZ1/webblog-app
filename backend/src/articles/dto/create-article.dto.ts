@@ -18,7 +18,7 @@ export class CreateArticleDto {
   @IsNotEmpty()
   content: string;
 
-  @IsUrl()
+  @IsUrl({ require_protocol: true, require_tld: false, protocols: ['http', 'https'] })
   coverImage: string;
 
   @IsOptional()
@@ -42,4 +42,3 @@ export class CreateArticleDto {
   @IsBoolean()
   featured?: boolean;
 }
-
